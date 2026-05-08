@@ -1,0 +1,12 @@
+{
+    "video_id": "vid_000089_14__walk_down_hall_angry",
+    "label": 0,
+    "source": "DFD",
+    "n_original_frames": 64,
+    "target_frames": 64,
+    "au_shape": [
+        64,
+        17
+    ],
+    "video_path": "/kaggle/input/datasets/sanikatiwarekar/deep-fake-detection-dfd-entire-original-dataset/DFD_original sequences/14__walk_down_hall_angry.mp4"
+}
