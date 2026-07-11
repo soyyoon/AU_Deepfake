@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Deepfake Signal</title>
+    <link rel="stylesheet" href="popup.css?v=score-guide">
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <p class="eyebrow">Deepfake Signal</p>
+        <h1>현재 화면 미디어</h1>
+      </header>
+
+      <section class="status-panel" aria-live="polite">
+        <div class="meter">
+          <span id="candidateCount">--</span>
+          <small>items</small>
+        </div>
+        <div>
+          <p id="statusTitle" class="label">대기 중</p>
+          <p id="statusText" class="summary">현재 탭에서 보이는 영상과 이미지를 확인합니다.</p>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button id="scanBtn" type="button">분석 시작</button>
+        <button id="clearBtn" class="secondary" type="button">표시 지우기</button>
+      </div>
+
+      <dl class="scores" aria-label="미디어 탐색 요약">
+        <div>
+          <dt>Video</dt>
+          <dd id="videoCount">--</dd>
+        </div>
+        <div>
+          <dt>Image</dt>
+          <dd id="imageCount">--</dd>
+        </div>
+        <div>
+          <dt>Largest</dt>
+          <dd id="largestType">--</dd>
+        </div>
+      </dl>
+
+      <section class="score-guide" aria-label="점수 해석">
+        <h2>점수 해석</h2>
+        <p><strong>퍼센트는 딥페이크 방향 점수입니다.</strong> Real/Safe로 볼수록 낮고, Fake/Deepfake로 볼수록 높습니다. 아직 실제 확률로 보정된 값은 아닙니다.</p>
+        <div class="score-scale" aria-label="점수 구간">
+          <span>0-75 Safe</span>
+          <span>75-95 Review</span>
+          <span>95+ Deepfake</span>
+        </div>
+      </section>
+
+      <section class="candidate-panel" aria-labelledby="candidateHeading">
+        <h2 id="candidateHeading">추천 후보</h2>
+        <ul id="candidateList" class="candidate-list">
+          <li class="empty">아직 탐색 결과가 없습니다.</li>
+        </ul>
+      </section>
+
+      <p class="privacy-note">
+        이 단계에서는 원본 이미지나 영상 파일 전체를 서버로 보내지 않고, 화면에 보이는 후보 영역의 crop 프레임과 최소 메타정보만 분석합니다.
+      </p>
+    </main>
+
+    <script src="popup.js?v=score-guide"></script>
+  </body>
+</html>

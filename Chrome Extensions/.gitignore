@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.*
+
+# ML checkpoints / model weights
+*.pt
+*.pth
+*.ckpt
+
+# Temporary files
+*.tmp
