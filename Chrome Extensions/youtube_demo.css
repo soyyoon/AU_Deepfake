@@ -1,0 +1,161 @@
+html[data-deepfake-signal-youtube-demo] [data-deepfake-signal-demo-card="disabled"],
+html[data-deepfake-signal-youtube-demo] [data-deepfake-signal-demo-card="disabled"] * {
+  cursor: default !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+html[data-deepfake-signal-youtube-demo] [data-deepfake-signal-demo-card="disabled"] a {
+  text-decoration: none !important;
+}
+
+video[data-deepfake-signal-demo-underlay] {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+[data-deepfake-signal-demo-player-mount] {
+  position: relative !important;
+}
+
+#deepfake-signal-demo-player {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  background: #000;
+  color: #fff;
+  font: 13px/1.4 Roboto, Arial, sans-serif;
+  outline: none;
+}
+
+#deepfake-signal-demo-player > video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+#deepfake-signal-demo-player button {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font: 700 19px/1 Roboto, Arial, sans-serif;
+  cursor: pointer;
+  user-select: none;
+}
+
+#deepfake-signal-demo-player button:focus-visible,
+#deepfake-signal-demo-player .deepfake-signal-demo-progress:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.deepfake-signal-demo-center-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 68px;
+  height: 48px;
+  border-radius: 12px !important;
+  background: rgba(0, 0, 0, 0.76) !important;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity 140ms ease, background 140ms ease;
+}
+
+#deepfake-signal-demo-player.is-paused .deepfake-signal-demo-center-play {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.deepfake-signal-demo-controls {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  gap: 6px;
+  padding: 42px 12px 8px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.82));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+#deepfake-signal-demo-player:hover .deepfake-signal-demo-controls,
+#deepfake-signal-demo-player:focus-within .deepfake-signal-demo-controls,
+#deepfake-signal-demo-player.is-paused .deepfake-signal-demo-controls {
+  opacity: 1;
+}
+
+.deepfake-signal-demo-progress {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.34);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.deepfake-signal-demo-progress::after {
+  position: absolute;
+  inset: -6px 0;
+  content: "";
+}
+
+.deepfake-signal-demo-progress > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: #f00;
+}
+
+.deepfake-signal-demo-control-row {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  gap: 5px;
+  pointer-events: auto;
+}
+
+.deepfake-signal-demo-control-row button {
+  width: 38px;
+  height: 32px;
+}
+
+.deepfake-signal-demo-mute {
+  font-size: 16px !important;
+}
+
+.deepfake-signal-demo-time {
+  margin-left: 3px;
+  color: #fff;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px #000;
+  white-space: nowrap;
+}
+
+.deepfake-signal-demo-control-spacer {
+  flex: 1;
+}
+
+.deepfake-signal-demo-fullscreen {
+  font-size: 22px !important;
+}
+
+#deepfake-signal-demo-player:fullscreen {
+  width: 100vw;
+  height: 100vh;
+}
