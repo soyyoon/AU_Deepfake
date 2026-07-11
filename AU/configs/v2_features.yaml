@@ -1,0 +1,36 @@
+# v2 RICH representation: AUs(20) + head-pose(3) + emotions(7) = 30ch (features.npy)
+seed: 42
+gpu: 0
+
+paths:
+  data_dir: data
+  metadata_csv: data/dataset_metadata_v2_balanced.csv
+  output_dir: outputs/v2/features
+  splits_csv: outputs/v2/splits.csv            # SHARED with v2_au (same identity-disjoint split)
+  norm_stats: outputs/v2/features/norm_stats.npz
+  checkpoint: outputs/v2/features/checkpoints/best.pt
+  metrics_json: outputs/v2/features/metrics.json
+  plots_dir: outputs/v2/features/plots
+
+data:
+  seq_len: 64
+  n_channels: 30
+  feature_file: features.npy
+  preload: true
+  num_workers: 4
+
+model:
+  name: gru
+  gru: {hidden: 128, num_layers: 2, dropout: 0.3}
+  transformer: {d_model: 64, nhead: 4, num_layers: 2, dim_feedforward: 128, dropout: 0.3}
+
+train:
+  batch_size: 128
+  epochs: 60
+  lr: 0.001
+  weight_decay: 0.0001
+  loss: bce_pos_weight
+  focal_gamma: 2.0
+  early_stop_metric: auc
+  patience: 8
+  threshold_metric: f1

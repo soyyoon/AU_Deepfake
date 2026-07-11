@@ -1,0 +1,13 @@
+# Core (required) — all present & working in the `flow_ct` conda env
+torch>=2.6        # +cu124 build; single-GPU training
+numpy>=1.26,<2
+pandas>=2.0
+pyyaml>=6.0
+matplotlib>=3.7
+
+# Optional — classic ML baseline preference. NOTE: in the current environment
+# both pull scipy, whose numpy<->Fortran ABI is broken (import raises
+# TypeError at scipy.interpolate). baseline.py auto-falls back to a torch
+# logistic regression when these are unimportable, so they are NOT required.
+# scikit-learn>=1.3
+# xgboost>=2.0

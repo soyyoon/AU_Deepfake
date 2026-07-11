@@ -1,0 +1,42 @@
+seed: 42
+gpu: 0                         # single-GPU index
+
+paths:
+  data_dir: data
+  metadata_csv: data/dataset_metadata.csv
+  output_dir: outputs
+  splits_csv: outputs/splits.csv
+  norm_stats: outputs/norm_stats.npz
+  checkpoint: outputs/checkpoints/best.pt
+  metrics_json: outputs/metrics.json
+  plots_dir: outputs/plots
+
+data:
+  seq_len: 64
+  n_channels: 17
+  preload: true                # 43MB dataset -> load all npy into RAM
+  num_workers: 4
+
+model:
+  name: gru                    # gru | transformer
+  gru:
+    hidden: 128
+    num_layers: 2
+    dropout: 0.3
+  transformer:
+    d_model: 64
+    nhead: 4
+    num_layers: 2
+    dim_feedforward: 128
+    dropout: 0.3
+
+train:
+  batch_size: 128
+  epochs: 60
+  lr: 0.001
+  weight_decay: 0.0001
+  loss: bce_pos_weight         # bce_pos_weight | focal
+  focal_gamma: 2.0
+  early_stop_metric: auc       # monitored on val
+  patience: 8
+  threshold_metric: f1         # f1 | balanced_acc  (selected on val)
