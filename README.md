@@ -1,105 +1,206 @@
-# Two-Branch Deepfake Detector — SBI + Temporal
+<div align="center">
 
-일반화 우선(generalization-first) 딥페이크 탐지기. 특정 조작 데이터셋의 "지문"을 암기하는 대신,
-**자기지도(self-supervised)로 조작의 보편 아티팩트를 생성·학습**해 미지 도메인/기법에 일반화한다.
+# 🕵️ Two-Branch Deepfake Detector
 
-서로 다른 조작 유형을 잡는 두 개의 상보 브랜치:
+### Self-Supervised Spatial & Temporal Generalization
 
-| 브랜치 | 학습 신호 (자기지도, fake 데이터셋 미사용) | 잡는 조작 |
+실제 얼굴 영상만으로 **공간적(Spatial) 조작 아티팩트**와 **시간적(Temporal) 불일치**를 각각 학습하고,
+두 모델을 결합하여 **다양한 딥페이크 기법에 일반화 가능한 탐지 시스템**을 구현했습니다.
+
+
+---
+
+## 📖 목차
+
+- [소개](#-소개)
+- [시스템 아키텍처](#-시스템-아키텍처)
+- [주요 특징](#-주요-특징)
+- [기술 스택](#-기술-스택)
+- [모델 구조](#-모델-구조)
+- [프로젝트 구조](#-프로젝트-구조)
+- [설치](#-설치)
+- [추론 실행](#-추론-실행)
+- [성능](#-성능)
+- [향후 계획](#-향후-계획)
+
+---
+
+## 📋 소개
+
+기존 딥페이크 탐지 모델은 특정 생성 모델(FaceSwap, Face2Face 등)의 흔적을 암기하는 방식이 많아, 학습에 없던 새로운 조작 기법에는 성능이 크게 떨어지는 한계가 있습니다.
+
+이 프로젝트는 **Zero-shot Generalization**을 목표로, 실제(real) 영상만을 이용해 두 종류의 pseudo-fake를 self-supervised 방식으로 직접 생성하고 학습합니다.
+
+| Branch | 대응 조작 유형 |
+|---|---|
+| **Spatial (SBI)** | 얼굴 블렌딩 경계를 학습하여 Face Swap 계열 탐지 |
+| **Temporal** | 입 움직임의 시간적 불일치를 학습하여 Reenactment / Lip-sync 계열 탐지 |
+
+각 브랜치는 서로 다른 조작 유형에 특화되어 있으며, 최종적으로 두 결과를 융합해 더 강건한 탐지 성능을 제공합니다.
+
+---
+
+## 🏗 시스템 아키텍처
+
+```
+Raw Videos
+    │
+    ▼
+Face Detection & Landmark Extraction (Py-Feat)
+    │
+    ├──────────────────────────┐
+    ▼                          ▼
+Spatial Pipeline           Temporal Pipeline
+   (SBI)                    (Temporal)
+    │                          │
+Self-Blended Images     Temporal Pseudo-Fake
+    │                          │
+EfficientNet-B4           CNN + BiGRU
+    │                          │
+Swap Score                Temporal Score
+    └──────────────┬───────────┘
+                   ▼
+            Score Fusion (Max)
+                   ▼
+              Real / Fake
+```
+
+---
+
+## ✨ 주요 특징
+
+### 🔹 Self-Supervised Spatial Learning
+실제 얼굴 이미지로부터 Self-Blended Image(SBI)를 생성하여 다음과 같은 Face Swap 계열의 공통 아티팩트를 학습합니다.
+- Blending Boundary
+- Color Mismatch
+- Compression Artifact
+
+### 🔹 Temporal Consistency Learning
+실제 연속 영상에서 다음을 생성하여
+- Mouth Temporal Splicing
+- Temporal Jitter
+
+Reenactment / Lip-sync / Talking Head 계열에서 나타나는 시간적 불일치를 학습합니다.
+
+### 🔹 On-the-fly Pseudo-Fake Generation
+모든 fake 이미지를 미리 저장하지 않고, 학습 중 Self-Blended Image와 Temporal Fake를 실시간으로 생성합니다. 저장 공간을 크게 줄이면서 데이터 다양성을 확보했습니다.
+
+### 🔹 Streaming Data Pipeline
+DFDC, FF++ 등 대용량 데이터셋을 아래 방식으로 처리해 디스크 사용량을 최소화했습니다.
+
+```
+Download → Process → Feature Extraction → Delete
+```
+
+### 🔹 Two-Branch Fusion
+Spatial 모델과 Temporal 모델은 서로 다른 조작 유형에 강점을 가지므로, 다음과 같이 융합해 일반화 성능을 높였습니다.
+
+```
+Final Score = max(Spatial Score, Temporal Score)
+```
+
+---
+
+## 🛠 기술 스택
+
+| 분류 | 사용 기술 |
+|---|---|
+| Language | Python |
+| Deep Learning | PyTorch, timm |
+| Computer Vision | OpenCV, Py-Feat |
+| Data Processing | NumPy, Albumentations |
+
+---
+
+## 🧠 모델 구조
+
+| Branch | Architecture | 목적 |
 |---|---|---|
-| **SBI** (Self-Blended Images) | 실제 얼굴을 자기 자신에 블렌딩 → **공간 블렌딩 경계** | face-swap (Deepfakes, FaceSwap, FaceShifter …) |
-| **Temporal** | 실제 연속 클립의 입 영역을 시간축 스플라이스 → **시간 불일치** | reenactment / lip-sync (Face2Face, NeuralTextures …) |
+| Spatial | EfficientNet-B4 + Self-Blended Images | Face Swap 탐지 |
+| Temporal | EfficientNet-B0 + BiGRU | Reenactment / Lip-sync 탐지 |
+| Fusion | Max Score Fusion | 최종 판단 |
 
-각 브랜치가 **독립적으로 일반화**하므로 융합이 실제로 작동한다.
-최종 판정(OR): `SBI(swap) 또는 Temporal(reenact) 중 하나라도 임계값 초과 → FAKE`.
+---
 
-## 결과
-
-4개 도메인 zero-shot 비디오 AUC (단일 SBI):
-
-| CelebDF | FF++ | WildDeepfake | DFDC | **macro** |
-|:---:|:---:|:---:|:---:|:---:|
-| 0.92 | 0.77 | 0.69 | 0.84 | **0.80** |
-
-- SBI 단일 모델이 4도메인 macro **0.80** — 기존 AU/ConvNeXt 앙상블의 오라클(0.78)을 초월.
-- Temporal 브랜치가 FF++ **reenactment**에서 SBI 능가 (NeuralTextures 0.83 vs 0.68).
-- 실제 야생 fake 3종(idol face-swap ×2 + Zuckerberg reenactment)을 두 브랜치가 함께 모두 탐지.
-
-근거·실험 상세: [`outputs/sbi/sbi_results.md`](outputs/sbi/sbi_results.md),
-[`outputs/temporal/temporal_results.md`](outputs/temporal/temporal_results.md) · 설계: [`docs/`](docs/)
-
-## 설치
-
-두 개의 conda 환경 (자세한 버전은 [`requirements.txt`](requirements.txt)):
-
-```bash
-# [1] 학습·추론 (sbi)
-conda create -n sbi python=3.10 -y
-conda run -n sbi pip install torch==2.6.0 torchvision==0.21.0 \
-    --index-url https://download.pytorch.org/whl/cu124
-conda run -n sbi pip install -r requirements.txt
-
-# [2] 얼굴 검출·크롭·랜드마크 (pyfeat) — numpy 충돌로 반드시 분리
-conda create -n pyfeat python=3.10 -y
-conda run -n pyfeat pip install py-feat==0.6.2
-```
-
-## 추론 (영상 진위 판별)
-
-```bash
-PY=~/anaconda3/envs/pyfeat/bin/python
-
-# video_id,path 형식의 csv 준비 (예: videos.csv)
-#   video_id,path
-#   myvid,/abs/path/to/video.mp4
-
-# 1) 얼굴 크롭(SBI용) + dense 클립(Temporal용) 추출 — pyfeat env
-PYTHONNOUSERSITE=1 $PY scripts/sbi/local_video_crops.py --targets videos.csv --out crops
-PYTHONNOUSERSITE=1 $PY scripts/sbi/local_video_clips.py --targets videos.csv --out clips
-
-# 2) 2-브랜치 탐지 — sbi env
-PYTHONNOUSERSITE=1 CUDA_VISIBLE_DEVICES=0 conda run -n sbi python scripts/sbi/detect.py \
-    --crops crops --clips clips --vids myvid
-```
-
-출력 예:
-```
-video         SBI(swap)   Temporal  FUSED(OR)  판정(근거)
-myvid            0.253      0.606      0.606  FAKE (reenact)
-```
-
-## 학습 (재현)
-
-```bash
-# 데이터: 실제 얼굴 영상 -> 크롭+랜드마크(SBI) / 연속 클립(Temporal) 추출 (pyfeat env)
-PYTHONNOUSERSITE=1 $PY scripts/sbi/sbi_stream_crops.py --targets <real.csv> --out data_sbi/real
-PYTHONNOUSERSITE=1 $PY scripts/sbi/cache_landmarks.py  --root data_sbi/real
-PYTHONNOUSERSITE=1 $PY scripts/sbi/stream_clips.py     --targets <real.csv> --out data_sbi/clips
-
-# 학습 (sbi env) — 각 브랜치는 real 데이터만으로 온더플라이 pseudo-fake 생성
-conda run -n sbi python scripts/sbi/train.py          --root  data_sbi/real  --out outputs/sbi
-conda run -n sbi python scripts/sbi/temporal_train.py --clips data_sbi/clips --out outputs/temporal
-```
-
-## 구조
+## 📂 프로젝트 구조
 
 ```
 scripts/
-  stream_extract.py  stream_ffpp_convnext_frames.py  extract_features.py   # 공용 유틸(다운로드/얼굴크롭/pyfeat)
-  sbi/
-    sbi_gen · dataset · train · eval_sbi.py                       # SBI 브랜치
-    temporal_gen · temporal_dataset · temporal_train · temporal_eval.py    # Temporal 브랜치
-    detect.py                                                    # ★ 최종 2-브랜치 OR 탐지기
-    cache_landmarks.py                                           # 68-pt 랜드마크(pyfeat)
-    local_video_crops · local_video_clips.py                     # 로컬 영상 -> 크롭 / 클립 (추론용)
-    sbi_stream_crops · stream_clips · dfdc_extract.py            # Kaggle 스트리밍 추출 (학습/평가용)
+├── sbi/
+│   ├── train.py
+│   ├── dataset.py
+│   ├── sbi_gen.py
+│   ├── temporal_train.py
+│   ├── temporal_dataset.py
+│   ├── temporal_gen.py
+│   ├── detect.py
+│   ├── eval_sbi.py
+│   └── temporal_eval.py
+│
+├── extract_features.py
+├── stream_extract.py
+├── stream_ffpp_convnext_frames.py
+└── dfdc_extract.py
+
 outputs/
-  sbi/best.pt        temporal/best.pt                            # 학습된 모델
-  sbi/*.md           temporal/*.md                               # 결과
-docs/                                                            # 설계 문서
+├── sbi/
+└── temporal/
 ```
 
-## 참고
+---
 
-- 대용량 데이터(크롭/클립/테스트셋)는 `.gitignore` 처리 — 추출 스크립트로 재생성.
-- 모든 pyfeat 실행은 `PYTHONNOUSERSITE=1` 필요 (numpy 충돌 방지).
+## 🚀 설치
+
+```bash
+git clone https://github.com/soyyoon/Two-Branch-Deepfake-Detector.git
+cd Two-Branch-Deepfake-Detector
+
+conda create -n sbi python=3.10
+conda activate sbi
+pip install -r requirements.txt
+```
+
+> **Py-Feat**는 별도의 conda 환경에서 실행해야 합니다.
+
+```bash
+conda create -n pyfeat python=3.10
+conda activate pyfeat
+pip install py-feat
+```
+
+---
+
+## 🚀 추론 실행
+
+**1. Face Crop 추출**
+```bash
+python local_video_crops.py
+```
+
+**2. Temporal Clip 추출**
+```bash
+python local_video_clips.py
+```
+
+**3. 딥페이크 탐지**
+```bash
+python detect.py
+```
+
+---
+
+## 📊 성능
+
+### Spatial Branch (SBI)
+
+| Dataset | AUC |
+|---|---|
+| CelebDF | 0.92 |
+| DFDC | 0.84 |
+| FF++ | 0.77 |
+| WildDeepfake | 0.69 |
+| **Macro AUC** | **0.80** |
+
+### Temporal Branch
+
+Temporal 모델은 **NeuralTextures, Face2Face, Lip-sync** 계열에서 Spatial 모델보다 높은 탐지 성능을 보였습니다.
