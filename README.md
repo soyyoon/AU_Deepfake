@@ -1,5 +1,3 @@
-<div align="center">
-
 # 🕵️ Two-Branch Deepfake Detector
 
 ### Self-Supervised Spatial & Temporal Generalization
